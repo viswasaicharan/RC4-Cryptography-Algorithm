@@ -1,0 +1,83 @@
+import tkinter as tk
+from tkinter import Text, Label, Button import base64
+class RC4:
+def     init (self): pass
+def check_key_size(self, key): if len(key) > 16:
+print("\n !! O comprimento da chave não pode ser superior a 128 bits !!") raise ValueError("Comprimento da chave deve ser 128 bits ou menos")
+def b64e(self, s):
+return base64.b64encode(s.encode()).decode() def b64d(self, s):
+return base64.b64decode(s).decode() def convert_string_in_ascii(self, string):
+text_in_asc = [i for i in range(0, len(string))] for i in range(0, len(string)):
+text_in_asc[i] = ord(string[i]) return text_in_asc
+def initial_S_T_vector(self, key): S = [i for i in range(0, 256)] T = [0 for i in range(0, 256)] k = 0
+for i in range(0, 256): if k == len(key):
+k = 0
+ 
+T[i] = (key[k]) k = k + 1
+return S, T
+def KSA(self, S, T): j = 0
+for i in range(0, 256):
+j = (j + S[i] + T[i]) % 256 S[i], S[j] = S[j], S[i]
+return S
+def PRGA(self, S):
+key_stream = [i for i in range(0, 256)] j = 0
+for i in range(0, 256): i = (i + 1) % 256
+j = (j + S[i]) % 256 S[i], S[j] = S[j], S[i]
+t = (S[i] + S[j]) % 256
+key_stream[i] = S[t] return key_stream
+def XOR(self, text, key_stream):
+result = [i for i in range(0, len(text))] for i in range(len(text)):
+result[i] = text[i] ^ key_stream[i] return result
+def convert_ascii_in_string(self, text): text_encrypt = [chr(i) for i in text] text_encrypt = ''.join(text_encrypt) return text_encrypt
+def cria_arquivo_texto_cifrado(self, cipher_text): arquivo = open("text_cipher.txt", "w") arquivo.write(str(cipher_text))
+ 
+arquivo.close()
+def ler_arquivo_texto_cifrado(self): arquivo = open('text_cipher.txt', 'r') texto = arquivo.readlines() arquivo.close()
+return texto
+class RC4Encrypt(RC4):
+def     init (self, text, key): self.plain_text = text self.key = key
+self.S = None self.T = None
+self.text_in_asc = None self.key_stream = None self.cipher_text = None self.text_in_base64 = None
+def encrypt(self): super().check_key_size(self.key)
+self.key = super().convert_string_in_ascii(self.key) self.S, self.T = super().initial_S_T_vector(self.key)
+self.text_in_asc = super().convert_string_in_ascii(self.plain_text) self.S = super().KSA(self.S, self.T)
+self.key_stream = super().PRGA(self.S)
+self.cipher_text = super().XOR(self.text_in_asc, self.key_stream) self.cipher_text_user = super().convert_ascii_in_string(self.cipher_text) self.text_in_base64 = super().b64e(self.cipher_text_user) super().cria_arquivo_texto_cifrado(self.text_in_base64)   self.cipher_text = super().ler_arquivo_texto_cifrado()
+return self.text_in_base64 class RC4Decrypt(RC4):
+def     init   (self, text, key):
+ 
+self.cipher_text = super().b64d(text) self.key = key
+self.S = None self.T = None
+self.text_in_asc = None self.key_stream = None self.texto_simples = None
+def decrypt(self): super().check_key_size(self.key)
+self.key = super().convert_string_in_ascii(self.key) self.S, self.T = super().initial_S_T_vector(self.key)
+self.text_in_asc = super().convert_string_in_ascii(self.cipher_text) self.S = super().KSA(self.S, self.T)
+self.key_stream = super().PRGA(self.S)
+self.texto_simples = super().XOR(self.text_in_asc, self.key_stream) self.texto_simples = super().convert_ascii_in_string(self.texto_simples) return self.texto_simples
+class RC4EncryptDecryptGUI: def     init (self, master): self.master = master
+master.title("RC4 Encryption and Decryption") master.rowconfigure(0, weight=1) master.columnconfigure(1, weight=1)
+# Plain Text
+self.plain_text_label = Label(master, text="Plain Text:", bg="lightgray") self.plain_text_label.grid(row=0, column=0, padx=10, pady=5) self.plain_text_entry = Text(master, height=4, width=40, bg="lightyellow") self.plain_text_entry.grid(row=0, column=1, padx=10, pady=5, sticky="nsew") # Key
+self.key_label = Label(master, text="Key:", bg="lightgray") self.key_label.grid(row=1, column=0, padx=10, pady=5)
+ 
+self.key_entry = Text(master, height=1, width=40, bg="lightyellow") self.key_entry.grid(row=1, column=1, padx=10, pady=5, sticky="nsew") # Cipher Text
+self.cipher_text_label = Label(master, text="Cipher Text:", bg="lightgray") self.cipher_text_label.grid(row=2, column=0, padx=10, pady=5) self.cipher_text_entry = Text(master, height=4, width=40, bg="lightyellow") self.cipher_text_entry.grid(row=2, column=1, padx=10, pady=5, sticky="nsew") # Buttons
+self.encrypt_button	=	Button(master,	text="Encrypt",	command=self.encrypt_text, bg="lightblue")
+self.encrypt_button.grid(row=3, column=0, padx=10, pady=5)
+self.decrypt_button    =	Button(master,	text="Decrypt", command=self.decrypt_text, bg="lightgreen")
+self.decrypt_button.grid(row=3, column=1, padx=10, pady=5) # Result
+self.result_label = Label(master, text="Result:", bg="lightgray") self.result_label.grid(row=4, column=0, padx=10, pady=5)
+self.result_text = Text(master, height=4, width=30, state="disabled", bg="lightyellow") self.result_text.grid(row=4, column=1, padx=10, pady=5, sticky="nsew")
+def encrypt_text(self):
+plain_text = self.plain_text_entry.get("1.0", "end-1c") key = self.key_entry.get("1.0", "end-1c")
+rc4_encrypt = RC4Encrypt(plain_text, key) encrypted_text = rc4_encrypt.encrypt() self.result_text.config(state="normal") self.result_text.delete("1.0", "end")
+self.result_text.insert("end", "Encrypted Text:\n" + encrypted_text) self.result_text.config(state="disabled")
+def decrypt_text(self):
+cipher_text = self.cipher_text_entry.get("1.0", "end-1c") key = self.key_entry.get("1.0", "end-1c")
+rc4_decrypt = RC4Decrypt(cipher_text, key)
+ 
+decrypted_text = rc4_decrypt.decrypt() self.result_text.config(state="normal") self.result_text.delete("1.0", "end")
+self.result_text.insert("end", "Decrypted Text:\n" + decrypted_text) self.result_text.config(state="disabled")
+def main():
+root = tk.Tk() RC4EncryptDecryptGUI(root) root.mainloop()
+if     name	== " main ": main()
